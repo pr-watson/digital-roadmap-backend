@@ -8,6 +8,7 @@ SETTINGS = Settings.create()
 ENGINE = create_async_engine(
     str(SETTINGS.database_url),
     echo=SETTINGS.debug,
+    hide_parameters=True,  # Prevent SQL parameter values from entering logs when debug is enabled
     pool_size=SETTINGS.db_pool_size,
     max_overflow=SETTINGS.db_max_overflow,
     pool_pre_ping=True,  # Test connections before using them from the pool
