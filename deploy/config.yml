@@ -28,6 +28,17 @@ objects:
           deploymentStrategy:
             privateStrategy: RollingUpdate
 
+          # Multi-AZ resilience: spread pods across availability zones to meet
+          # disaster-recovery requirements. Requires minReplicas >= 2.
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchLabels:
+                  app: ${APP_NAME}
+                  pod: ${APP_NAME}-api
+
           webServices:
             public:
               enabled: true
@@ -258,6 +269,19 @@ objects:
                   defaultMode: 420
                   secretName: notification-backend-cert
                   optional: true
+
+  # PodDisruptionBudget ensures at least 2 api pods remain available during
+  # voluntary disruptions (node drains, upgrades), meeting HA/DR requirements.
+  - apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      name: ${APP_NAME}-api-pdb
+    spec:
+      minAvailable: 2
+      selector:
+        matchLabels:
+          app: ${APP_NAME}
+          pod: ${APP_NAME}-api
 
 parameters:
   - name: IMAGE_TAG
